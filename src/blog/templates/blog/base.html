@@ -1,0 +1,22 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Bitácora robótica{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'blog/site.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <a class="site-name" href="{% url 'blog:home' %}">Bitácora robótica</a>
+        <nav aria-label="Navegación principal">
+            <a href="{% url 'blog:home' %}">Portada</a>
+            <a href="{% url 'blog:about' %}">Sobre mí</a>
+        </nav>
+    </header>
+    <main class="page-content">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

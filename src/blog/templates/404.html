@@ -1,0 +1,11 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Página no encontrada — Bitácora robótica{% endblock %}
+
+{% block content %}
+    <section class="not-found">
+        <h1>404 — Señal perdida</h1>
+        <p>Este artículo no aparece en nuestros radares. Puede que haya sido retirado o que la dirección sea incorrecta.</p>
+        <p><a href="{% url 'blog:home' %}">Volver a la portada</a></p>
+    </section>
+{% endblock %}

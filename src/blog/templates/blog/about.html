@@ -1,0 +1,13 @@
+{% extends "blog/base.html" %}
+{% load content_format %}
+
+{% block title %}Sobre mí — Bitácora robótica{% endblock %}
+
+{% block content %}
+    <article class="about-page">
+        <h1>Sobre mí</h1>
+        <div class="article-content">
+            {{ page.content|format_article_content }}
+        </div>
+    </article>
+{% endblock %}

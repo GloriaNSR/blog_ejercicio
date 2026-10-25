@@ -1,0 +1,30 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Bitácora robótica — artículos recientes{% endblock %}
+
+{% block content %}
+    <h1>Artículos recientes</h1>
+    {% if articles %}
+        <section class="article-list" aria-label="Artículos publicados">
+            {% for article in articles %}
+                <article class="article-card">
+                    {% if article.image %}
+                        <a href="{% url 'blog:article_detail' article.slug %}">
+                            <img class="article-image" src="{{ article.image.url }}" alt="{{ article.title }}">
+                        </a>
+                    {% endif %}
+                    <h2><a href="{% url 'blog:article_detail' article.slug %}">{{ article.title }}</a></h2>
+                    <p class="article-date"><time datetime="{{ article.published_at|date:'c' }}">{{ article.published_at|date:"j F Y" }}</time></p>
+                    {% if article.excerpt %}
+                        <p>{{ article.excerpt }}</p>
+                    {% else %}
+                        <p>{{ article.content|truncatewords:35|linebreaksbr }}</p>
+                    {% endif %}
+                    <a class="read-more" href="{% url 'blog:article_detail' article.slug %}">Leer «{{ article.title }}»</a>
+                </article>
+            {% endfor %}
+        </section>
+    {% else %}
+        <p class="empty-state">Todavía no hay artículos publicados. Vuelve pronto para descubrir novedades sobre robótica.</p>
+    {% endif %}
+{% endblock %}

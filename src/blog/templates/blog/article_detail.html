@@ -1,0 +1,21 @@
+{% extends "blog/base.html" %}
+{% load content_format %}
+
+{% block title %}{{ article.title }} — Bitácora robótica{% endblock %}
+
+{% block content %}
+    <article class="article-detail">
+        <p><a href="{% url 'blog:home' %}">← Volver a los artículos</a></p>
+        <h1>{{ article.title }}</h1>
+        <p class="article-byline">
+            Publicado el <time datetime="{{ article.published_at|date:'c' }}">{{ article.published_at|date:"j F Y" }}</time>
+            por {{ article.author }}
+        </p>
+        {% if article.image %}
+            <img class="article-image article-hero" src="{{ article.image.url }}" alt="{{ article.title }}">
+        {% endif %}
+        <div class="article-content">
+            {{ article.content|format_article_content }}
+        </div>
+    </article>
+{% endblock %}
