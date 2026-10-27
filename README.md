@@ -12,6 +12,8 @@ lectura y utilizable desde móviles y ordenadores.
 - **Sobre mí:** página de presentación del autor, editable desde el panel.
 - **Administración:** Django Admin permite crear y editar artículos, controlar
   si están publicados y actualizar la presentación del autor.
+- **API REST:** permite consultar artículos publicados y crear borradores con
+  un token de una cuenta autorizada del panel.
 - **Almacenamiento local:** SQLite guarda los datos y las imágenes se guardan
   en la carpeta `src/media/`.
 
@@ -27,7 +29,7 @@ comentarios, registro público de lectores, suscripciones ni buscador.
 - Conexión a Internet durante la instalación de las dependencias.
 
 Las dependencias del proyecto están definidas en `requirements.txt` e incluyen
-Django y Pillow (para gestionar imágenes).
+Django, Django REST Framework y Pillow (para gestionar imágenes).
 
 ## Instalación y ejecución local
 
@@ -143,6 +145,63 @@ una línea con `## ` para crear un subtítulo.
 
 Para cambiar la presentación del autor, abre **Presentación del autor** en el
 panel y edita su contenido.
+
+## API REST
+
+Las lecturas de la API son públicas y solo muestran artículos publicados:
+
+- `GET http://127.0.0.1:8000/api/articulos/` — lista de artículos publicados.
+- `GET http://127.0.0.1:8000/api/articulos/1/` — detalle publicado por ID.
+
+Si ya tenías el proyecto instalado antes de añadir la API, aplica la migración
+del almacén de tokens una vez:
+
+```powershell
+.\.venv\Scripts\python.exe .\src\manage.py migrate
+```
+
+Consulta la lista con `curl.exe` desde PowerShell:
+
+```powershell
+curl.exe http://127.0.0.1:8000/api/articulos/
+```
+
+Para crear un borrador, genera un token para una cuenta con acceso al Django
+Admin. En Windows, desde la carpeta principal del proyecto, ejecuta:
+
+```powershell
+.\.venv\Scripts\python.exe .\src\manage.py drf_create_token tu_usuario_admin
+```
+
+El comando muestra el token. Guárdalo de forma privada y asígnalo a una
+variable de entorno en PowerShell:
+
+```powershell
+$env:BLOG_API_TOKEN = "pega_aqui_el_token"
+```
+
+Usa `curl.exe` desde PowerShell para crear un borrador; `titulo` y `cuerpo`
+son obligatorios y el borrador no aparecerá en las lecturas públicas hasta
+que se publique desde Django Admin:
+
+```powershell
+curl.exe -X POST http://127.0.0.1:8000/api/articulos/ -H "Authorization: Token $env:BLOG_API_TOKEN" -H "Content-Type: application/json" --data-raw '{"titulo":"Nuevo borrador","cuerpo":"Texto del artículo."}'
+```
+
+La respuesta incluye `id`, `titulo`, `cuerpo` y `estado`. Al crear, el estado
+siempre es `borrador`, por ejemplo:
+
+```json
+{
+  "id": 3,
+  "titulo": "Nuevo borrador",
+  "cuerpo": "Texto del artículo.",
+  "estado": "borrador"
+}
+```
+
+Las noticias creadas mediante la API pueden revisarse y publicarse en Django
+Admin.
 
 ## Estructura del proyecto
 

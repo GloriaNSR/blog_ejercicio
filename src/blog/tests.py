@@ -8,6 +8,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 from .models import AboutPage, Article
 
@@ -158,3 +160,159 @@ class EditorialAccessTests(TestCase):
         self.assertEqual(response.status_code, 302)
         page_response = self.client.get(reverse('blog:about'))
         self.assertContains(page_response, 'Presentación actualizada desde Django Admin.')
+
+
+class ArticleAPITests(TestCase):
+    def setUp(self):
+        self.published = Article.objects.create(
+            title='Artículo publicado',
+            slug='articulo-publicado',
+            content='Contenido público.',
+            author='Ada',
+            is_published=True,
+        )
+        self.draft = Article.objects.create(
+            title='Artículo borrador',
+            slug='articulo-borrador',
+            content='Contenido privado.',
+            author='Ada',
+            is_published=False,
+        )
+        self.admin = get_user_model().objects.create_user(
+            username='api-editor',
+            password='test-password',
+            is_staff=True,
+        )
+        self.admin_token = Token.objects.create(user=self.admin)
+        self.client = APIClient()
+
+    def test_list_is_public_and_contains_only_published_articles(self):
+        response = self.client.get(reverse('blog:api_articles'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            [
+                {
+                    'id': self.published.pk,
+                    'titulo': self.published.title,
+                    'cuerpo': self.published.content,
+                    'estado': 'publicado',
+                }
+            ],
+        )
+
+    def test_published_detail_is_public_and_draft_detail_is_hidden(self):
+        published_response = self.client.get(
+            reverse('blog:api_article_detail', args=[self.published.pk])
+        )
+        draft_response = self.client.get(
+            reverse('blog:api_article_detail', args=[self.draft.pk])
+        )
+        missing_response = self.client.get(
+            reverse('blog:api_article_detail', args=[99999])
+        )
+
+        self.assertEqual(published_response.status_code, 200)
+        self.assertEqual(published_response.json()['estado'], 'publicado')
+        self.assertEqual(draft_response.status_code, 404)
+        self.assertEqual(missing_response.status_code, 404)
+
+    def test_post_requires_an_admin_token(self):
+        response = self.client.post(
+            reverse('blog:api_articles'),
+            {'titulo': 'Nuevo borrador', 'cuerpo': 'Contenido.'},
+            format='json',
+        )
+
+        self.assertIn(response.status_code, (401, 403))
+        self.assertFalse(Article.objects.filter(title='Nuevo borrador').exists())
+
+    def test_non_staff_token_cannot_create_article(self):
+        reader = get_user_model().objects.create_user(
+            username='reader',
+            password='test-password',
+        )
+        token = Token.objects.create(user=reader)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+
+        response = self.client.post(
+            reverse('blog:api_articles'),
+            {'titulo': 'No autorizado', 'cuerpo': 'Contenido.'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(Article.objects.filter(title='No autorizado').exists())
+
+    def test_admin_token_creates_unpublished_article_with_contract_fields(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f'Token {self.admin_token.key}'
+        )
+
+        response = self.client.post(
+            reverse('blog:api_articles'),
+            {'titulo': 'Nuevo artículo API', 'cuerpo': 'Texto del borrador.'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            set(response.json()),
+            {'id', 'titulo', 'cuerpo', 'estado'},
+        )
+        self.assertEqual(response.json()['estado'], 'borrador')
+        article = Article.objects.get(pk=response.json()['id'])
+        self.assertFalse(article.is_published)
+        self.assertEqual(article.author, self.admin.get_username())
+        self.assertEqual(article.slug, 'nuevo-articulo-api')
+        self.assertEqual(article.excerpt, '')
+
+    def test_duplicate_titles_get_unique_slugs(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f'Token {self.admin_token.key}'
+        )
+
+        first = self.client.post(
+            reverse('blog:api_articles'),
+            {'titulo': 'Título repetido', 'cuerpo': 'Uno.'},
+            format='json',
+        )
+        second = self.client.post(
+            reverse('blog:api_articles'),
+            {'titulo': 'Título repetido', 'cuerpo': 'Dos.'},
+            format='json',
+        )
+
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(second.status_code, 201)
+        self.assertEqual(
+            set(Article.objects.filter(title='Título repetido').values_list(
+                'slug', flat=True
+            )),
+            {'titulo-repetido', 'titulo-repetido-2'},
+        )
+
+    def test_invalid_payloads_do_not_create_articles(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f'Token {self.admin_token.key}'
+        )
+        invalid_payloads = (
+            {'cuerpo': 'Sin título.'},
+            {'titulo': 'Sin cuerpo.'},
+            {'titulo': '   ', 'cuerpo': 'Cuerpo.'},
+            {'titulo': 'Título vacío', 'cuerpo': '   '},
+            {'titulo': 'x' * 201, 'cuerpo': 'Cuerpo.'},
+        )
+        original_count = Article.objects.count()
+
+        for payload in invalid_payloads:
+            with self.subTest(payload=payload):
+                response = self.client.post(
+                    reverse('blog:api_articles'),
+                    payload,
+                    format='json',
+                )
+                self.assertEqual(response.status_code, 400)
+
+        self.assertEqual(Article.objects.count(), original_count)

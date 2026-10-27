@@ -20,6 +20,20 @@ Entregar un blog en español centrado en la lectura de artículos sobre robótic
 - Mantener los artículos no publicados fuera de las páginas públicas.
 - Restringir la gestión al editor autenticado; no habrá registro ni cuentas para visitantes.
 
+### API REST
+
+- `GET /api/articulos/` lista exclusivamente artículos publicados.
+- `GET /api/articulos/<id>/` consulta un artículo publicado; los borradores y
+  los identificadores inexistentes responden HTTP 404.
+- `POST /api/articulos/` crea un borrador a partir de `titulo` y `cuerpo`.
+- Las lecturas son públicas. La creación exige un token de un usuario con
+  permisos de acceso al Django Admin; no se incorporan usuarios ni flujos de
+  registro nuevos.
+- La respuesta JSON incluye `id`, `titulo`, `cuerpo` y `estado`, con `estado`
+  igual a `publicado` o `borrador`.
+- La API reutiliza `Article` y el indicador existente `is_published`; no
+  renombra campos ni modifica el esquema de artículos.
+
 ### Requisitos transversales
 
 - Renderizar las páginas en el servidor con Django y persistir el contenido mediante modelos y migraciones.

@@ -49,3 +49,22 @@ Estos criterios describen resultados observables para la primera versión. Se ba
 
 - Las páginas públicas se renderizan en el servidor con Django y el contenido se conserva mediante los modelos y migraciones del proyecto.
 - La navegación y lectura principales siguen funcionando con JavaScript desactivado.
+
+## CA-08: API REST de artículos
+
+- `GET /api/articulos/` responde HTTP 200 con una lista JSON de artículos
+  publicados; ningún borrador aparece en ella.
+- `GET /api/articulos/<id>/` responde HTTP 200 y devuelve `id`, `titulo`,
+  `cuerpo` y `estado: "publicado"` para un artículo publicado.
+- El detalle de un borrador y el de un identificador inexistente responden
+  HTTP 404.
+- Un POST sin token o con un token que no pertenezca a un usuario con acceso al
+  Django Admin responde HTTP 401 o 403 y no crea artículos.
+- Un POST autenticado con `{"titulo": "...", "cuerpo": "..."}` responde HTTP
+  201, crea un artículo no publicado y devuelve `id`, `titulo`, `cuerpo` y
+  `estado: "borrador"`.
+- Un POST con campos ausentes, vacíos o un título superior al límite del
+  modelo responde HTTP 400 y no crea artículos.
+- El uso de la API no altera las páginas web, el panel administrativo ni los
+  artículos existentes. El indicador `is_published` existente determina el
+  estado de publicación y no se cambia el modelo.

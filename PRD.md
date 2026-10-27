@@ -89,6 +89,25 @@ El editor podrá crear, editar y retirar artículos y actualizar el texto de «S
 - Los artículos no publicados no aparecen en las páginas públicas.
 - No se ofrece un proceso de registro público.
 
+### RF-06: API de artículos
+
+La API REST permitirá consultar artículos publicados sin autenticación y crear
+borradores usando un token de una cuenta con acceso al Django Admin. La API
+reutilizará el modelo `Article` y su indicador existente `is_published`, y no
+ofrecerá un sistema nuevo de usuarios ni cambiará el esquema del modelo.
+
+**Criterios de aceptación**
+
+- `GET /api/articulos/` devuelve únicamente artículos publicados.
+- `GET /api/articulos/<id>/` devuelve un artículo publicado o HTTP 404 si no
+  existe o es un borrador.
+- `POST /api/articulos/` acepta `titulo` y `cuerpo`, crea siempre un borrador y
+  responde con `id`, `titulo`, `cuerpo` y `estado`.
+- El POST exige autenticación por token de un usuario autorizado para el
+  Django Admin; las solicitudes anónimas o de usuarios no autorizados se
+  rechazan.
+- Los datos inválidos reciben errores de validación y no crean artículos.
+
 ## 6. Requisitos de contenido y datos
 
 ### Artículo
@@ -137,6 +156,8 @@ La estructura exacta de aplicaciones, versiones de Django y configuración de de
 - `/sobre-mi/` — presentación del autor.
 - `/articulos/<slug>/` — detalle de un artículo.
 - `/admin/` — panel administrativo de Django, con acceso restringido.
+- `/api/articulos/` — lista pública de artículos y creación autenticada de borradores.
+- `/api/articulos/<id>/` — detalle público de un artículo publicado.
 
 ## 10. Métricas de éxito
 

@@ -13,6 +13,9 @@ Crear un espacio digital sencillo para compartir conocimiento y experiencias sob
 
 La portada presenta el blog y facilita descubrir las publicaciones recientes. Cada artículo ofrece un espacio propio, ordenado y legible, mientras que la sección «Sobre mí» da contexto sobre su autor. La navegación debe ser predecible y funcionar sin depender de JavaScript.
 
+Una API REST complementa la web: permite consultar publicaciones públicas y
+que el editor cree borradores mediante un token asociado a su cuenta de Django.
+
 La interfaz prioriza el texto: jerarquía visual clara, tipografía cómoda, contraste suficiente y adaptación a distintos tamaños de pantalla. El contenido inicial sirve como ejemplo y puede sustituirse desde las herramientas de edición.
 
 ## Principios
