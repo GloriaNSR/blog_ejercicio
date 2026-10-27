@@ -37,6 +37,8 @@ ajusta la ruta.
 
 ### Windows (PowerShell)
 
+La primera vez, abre una terminal en la carpeta del proyecto y ejecuta:
+
 ```powershell
 cd C:\ruta\a\blog_ejercicio
 py -m venv .venv
@@ -44,7 +46,6 @@ py -m venv .venv
 python -m pip install -r requirements.txt
 cd src
 python manage.py migrate
-python manage.py runserver
 ```
 
 Si PowerShell impide activar el entorno por la política de ejecución, puedes
@@ -57,8 +58,18 @@ py -m venv .venv
 python -m pip install -r requirements.txt
 cd src
 python manage.py migrate
-python manage.py runserver
 ```
+
+Después de esa configuración, cada vez que quieras iniciar el blog desde
+Visual Studio Code, abre una terminal en la carpeta principal del proyecto y
+ejecuta:
+
+```powershell
+.\.venv\Scripts\python.exe .\src\manage.py runserver
+```
+
+Deja la terminal abierta mientras uses el blog y visita
+<http://127.0.0.1:8000/>. Para detenerlo, pulsa `Ctrl+C` en la terminal.
 
 ### macOS o Linux
 
@@ -69,8 +80,10 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 cd src
 python manage.py migrate
-python manage.py runserver
 ```
+
+Después de la configuración inicial, inicia el servidor desde `src/` con
+`python manage.py runserver`.
 
 Al iniciar correctamente, Django mostrará en la terminal una dirección local.
 Abre estas páginas en el navegador:
@@ -85,14 +98,33 @@ entorno virtual, ejecuta `deactivate`.
 ## Crear la cuenta del editor
 
 La migración crea las tablas, pero no crea automáticamente una cuenta para el
-panel. Con el entorno virtual activado y desde la carpeta `src`, ejecuta:
+panel. Crea el superusuario una sola vez por cada base de datos. En Windows,
+abre una terminal en la carpeta principal del proyecto y ejecuta:
 
-```bash
-python manage.py createsuperuser
+```powershell
+.\.venv\Scripts\python.exe .\src\manage.py createsuperuser
 ```
 
-Sigue las instrucciones para elegir un nombre de usuario y contraseña. Luego
-inicia sesión en <http://127.0.0.1:8000/admin/>.
+En macOS o Linux, activa el entorno virtual y ejecuta `python manage.py
+createsuperuser` desde la carpeta `src/`.
+
+Sigue las instrucciones para elegir un nombre de usuario y contraseña. Al
+escribir la contraseña no verás los caracteres en la terminal; es normal.
+Después inicia el servidor e inicia sesión en
+<http://127.0.0.1:8000/admin/> con esas credenciales.
+
+## Cargar el contenido de ejemplo
+
+El repositorio incluye un fixture con las noticias y la presentación del autor.
+En una base de datos nueva, después de ejecutar las migraciones, ve a `src/` y
+ejecuta:
+
+```bash
+python manage.py loaddata blog_data
+```
+
+El fixture usa los archivos de imagen incluidos en `src/media/`. No lo cargues
+si ya tienes noticias o una presentación guardadas en esa base de datos.
 
 ## Añadir un artículo
 
